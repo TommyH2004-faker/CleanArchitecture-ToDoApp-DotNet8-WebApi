@@ -1,10 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TodoApp.Domain.Entities;
 
 namespace TodoApp.Infrastructure.Configurations
@@ -13,10 +8,32 @@ namespace TodoApp.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.HasData(
-                new User { UserId = 1, Username = "john_doe", Email = "john.doe@example.com", CreatedAt = DateTime.Now },
-                new User { UserId = 2, Username = "jane_smith", Email = "jane.smith@example.com", CreatedAt = DateTime.Now }
-            );
+            builder.ToTable("Users");
+            builder.HasKey(u => u.UserId);
+            
+            builder.Property(u => u.UserId)
+                .HasColumnName("UserId")
+                .ValueGeneratedOnAdd();
+
+            builder.Property(u => u.Username)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasColumnName("Username");
+
+            builder.Property(u => u.Email)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("Email");
+
+            builder.Property(u => u.CreatedAt)
+                .IsRequired()
+                .HasColumnName("CreatedAt");
+
+            // Configure relationships
+            builder.HasMany(u => u.ToDoLists)
+                .WithOne(t => t.User)
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

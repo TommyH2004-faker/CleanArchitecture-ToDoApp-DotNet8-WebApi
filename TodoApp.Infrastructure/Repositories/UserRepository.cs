@@ -1,9 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TodoApp.Application.Interfaces;
 using TodoApp.Domain.Entities;
 using TodoApp.Infrastructure.Data;
@@ -29,6 +24,24 @@ namespace TodoApp.Infrastructure.Repositories
             return await _context.Users.FindAsync(id);
         }
 
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        public async Task<User?> GetByUsernameAsync(string username)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == username);
+        }
+
+        public async Task AddAsync(User user)
+        {
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task AddUserAsync(User user)
         {
             _context.Users.Add(user);
@@ -50,6 +63,8 @@ namespace TodoApp.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+     
     }
 
 }

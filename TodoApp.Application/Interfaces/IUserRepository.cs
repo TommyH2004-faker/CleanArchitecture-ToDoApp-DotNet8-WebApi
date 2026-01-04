@@ -11,6 +11,9 @@ namespace TodoApp.Application.Interfaces
     {
         Task<IEnumerable<User>> GetAllUsersAsync();
         Task<User> GetUserByIdAsync(int id);
+        Task<User?> GetByEmailAsync(string email);
+        Task<User?> GetByUsernameAsync(string username);
+        Task AddAsync(User user);
         Task AddUserAsync(User user);
         Task UpdateUserAsync(User user);
         Task DeleteUserAsync(int id);

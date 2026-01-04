@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 using TodoApp.Domain.Entities;
 
 namespace TodoApp.Application.Interfaces
@@ -14,6 +10,7 @@ namespace TodoApp.Application.Interfaces
         Task<ToDoList> GetListByIdAsync(int id);
         Task AddListAsync(ToDoList list);
         Task UpdateListAsync(ToDoList list);
-        Task DeleteListAsync(int id);
+        Task DeleteListAsync(int toDoListId);
+        Task<ToDoList?> GetByIdAsync(int id);
     }
 }

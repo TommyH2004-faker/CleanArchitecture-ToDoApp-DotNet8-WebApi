@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using TodoApp.Application.Interfaces;
-using TodoApp.Domain.Entities;
+using TodoApp.Application.Features.TodoList.Commands.CreateList;
+using TodoApp.Application.Features.TodoList.Commands.DeleteList;
+using TodoApp.Application.Features.TodoList.Commands.UpdateList;
+using TodoApp.Application.Features.TodoList.Queries.GetAllToDolist;
 
 namespace TodoApp.WebAPI.Controllers
 {
@@ -9,26 +11,73 @@ namespace TodoApp.WebAPI.Controllers
     [Route("api/[controller]")]
     public class ToDoListController : ControllerBase
     {
-        private readonly IToDoListService _toDoListService;
+        private readonly IMediator _mediator;
 
-        public ToDoListController(IToDoListService toDoListService)
+        public ToDoListController(IMediator mediator)
         {
-            _toDoListService = toDoListService;
+            _mediator = mediator;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateToDoList([FromBody] ToDoList toDoList)
+        public async Task<IActionResult> CreateToDoList([FromBody] CreateToDoItemListCommand command)
         {
-            await _toDoListService.AddListAsync(toDoList);
-            return CreatedAtAction(nameof(GetToDoList), new { id = toDoList.ToDoListId }, toDoList);
+        
+            var result = await _mediator.Send(command);
+
+            
+            if (!result.IsSuccess)
+                return BadRequest(result.ErrorMessage);
+
+            return CreatedAtAction(nameof(GetToDoList), new { toDoListId = result.Data.ToDoListId }, result.Data);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetToDoList(int id)
+        [HttpGet("{toDoListId}")]
+        public async Task<IActionResult> GetToDoList(int toDoListId)
         {
-            var toDoList = await _toDoListService.GetListByIdAsync(id);
-            return toDoList == null ? NotFound() : Ok(toDoList);
+            var query = new GetbyId(toDoListId);
+            var result = await _mediator.Send(query);
+
+            if (!result.IsSuccess)
+                return NotFound(result.ErrorMessage);
+
+            return Ok(result.Data);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAllToDoLists()
+        {
+            var query = new GetAllList();
+            var result = await _mediator.Send(query);
+
+            if (!result.IsSuccess)
+                return NotFound(result.ErrorMessage);
+
+            return Ok(result.Data);
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteToDoList(int id)
+        {
+            var command = new DeleteToDoItemListCommand(id);
+            var result = await _mediator.Send(command);
+
+            if (!result.IsSuccess)
+                return NotFound(result.Errors);
+
+            return Ok(new { message = "ToDoList deleted successfully" });
+        }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateToDoList(int id, [FromBody] UpdateCommand command)
+        {
+            if (id != command.dto.ToDoListId)
+            {
+                return BadRequest("ID mismatch");
+            }
+
+            var result = await _mediator.Send(command);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.ErrorMessage);
+
+            return Ok(result.Data);
         }
     }
-
 }

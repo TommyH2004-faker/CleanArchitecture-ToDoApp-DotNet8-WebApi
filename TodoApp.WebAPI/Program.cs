@@ -1,116 +1,134 @@
 using Microsoft.EntityFrameworkCore;
 using TodoApp.Application.Interfaces;
 using TodoApp.Application.Services;
-using TodoApp.Domain.Entities;
-using TodoApp.Domain.Enums;
 using TodoApp.Infrastructure.Data;
 using TodoApp.Infrastructure.Repositories;
+using TodoApp.Infrastructure.Services;
 using TodoApp.WebAPI.Filters;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 namespace TodoApp.WebAPI
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+           // Configure Npgsql to use timestamp without time zone
+           AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+           
+           var builder = WebApplication.CreateBuilder(args);
+
+// Controllers + Global Filter
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});
+
+// ✅ MediatR - CQRS Pattern
+builder.Services.AddMediatR(cfg => {
+    cfg.RegisterServicesFromAssembly(typeof(TodoApp.Application.Features.Users.Commands.CreateUser.CreateUserCommand).Assembly);
+});
+
+// ✅ FluentValidation
+builder.Services.AddValidatorsFromAssembly(typeof(TodoApp.Application.Features.Users.Commands.CreateUser.CreateUserCommand).Assembly);
+
+// ✅ CORS - Đặt tên policy rõ ràng
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVueApp", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+// Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// ✅ JWT Service
+builder.Services.AddScoped<IJwtService, JwtService>();
+
+// ✅ JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!))
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// DI services - Giữ lại cho ToDoList/ToDoItem (chưa migrate sang CQRS)
+builder.Services.AddScoped<IToDoItemService, ToDoItemService>();
+builder.Services.AddScoped<IToDoListService, ToDoListService>();
+
+// DI repositories
+builder.Services.AddScoped<IToDoItemRepository, ToDoItemRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IToDoListRepository, ToDoListRepository>();
+
+// DB
+var useInMemoryDB = builder.Configuration.GetValue<bool>("UseInMemoryDB");
+
+if (useInMemoryDB)
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseInMemoryDatabase("TodoAppInMemoryDb"));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    });
+}
 
 
-            var useInMemoryDB = builder.Configuration.GetValue<bool>("UseInMemoryDB");
+var app = builder.Build();
 
-            // Add services to the container.
+// Swagger
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-            builder.Services.AddControllers(options =>
-            {
-                options.Filters.Add<GlobalExceptionFilter>();
-            });
+app.UseHttpsRedirection();
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddScoped<IToDoItemService, ToDoItemService>();
-            builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IToDoListService, ToDoListService>();
+app.UseRouting();
 
-            builder.Services.AddScoped<IToDoItemRepository, ToDoItemRepository>();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IToDoListRepository, ToDoListRepository>();
+// ✅ CORS PHẢI Ở TRƯỚC UseAuthorization
+app.UseCors("AllowVueApp");
 
+// ✅ Authentication PHẢI trước Authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
-            if (useInMemoryDB)
-            {
+app.MapControllers();
 
-                // we could have written that logic here but as per clean architecture, we are separating these into their own piece of code
-                builder.Services.AddInMemoryDatabase();
-            } else
-            {
-                //use this for real database on your sql server
-                builder.Services.AddDbContext<AppDbContext>(options =>
-                {
-                    options.UseSqlServer(
-                    builder.Configuration.GetConnectionString("DbContext"),
-                    providerOptions => providerOptions.EnableRetryOnFailure()
-                    );
-                }
-                  );
-            }
+app.Run();
 
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            if (useInMemoryDB)
-            {
-                // Seed data. Use this config for in memory database
-                using (var scope = app.Services.CreateScope())
-                {
-                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                    SeedData(context); // Call to seed data
-                }
-            } else
-            {
-                //User this if you want database on your sql server
-                // Automatically create the database if it does not exist. This is required only for real database
-                using (var scope = app.Services.CreateScope())
-                {
-                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                    context.Database.EnsureCreated(); // This creates the database if it doesn't exist
-                                                      //Seeding initial data is taken care from OnModelCreating of AppDbContext class.
-                }
-            }
-
-            app.Run();
         }
 
-        private static void SeedData(AppDbContext context)
-        {
-            context.Users.AddRange(
-                new User { UserId = 1, Username = "JohnDoe", Email = "john@example.com", CreatedAt = DateTime.Now },
-                new User { UserId = 2, Username = "JaneDoe", Email = "jane@example.com", CreatedAt = DateTime.Now }
-            );
-
-            context.ToDoLists.AddRange(
-                new ToDoList { ToDoListId = 1, UserId = 1, Title = "Groceries", Description = "Things to buy", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
-                new ToDoList { ToDoListId = 2, UserId = 1, Title = "Work", Description = "Work-related tasks", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now }
-            );
-
-            context.ToDoItems.AddRange(
-                new ToDoItem { ToDoItemId = 1, ToDoListId = 1, Title = "Buy milk", Description = "Get whole milk", DueDate = DateTime.Now.AddDays(2), IsCompleted = false, Priority = PriorityLevel.Medium, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
-                new ToDoItem { ToDoItemId = 2, ToDoListId = 1, Title = "Buy eggs", Description = "Get a dozen eggs", DueDate = DateTime.Now.AddDays(3), IsCompleted = false, Priority = PriorityLevel.High, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now }
-            );
-
-            context.SaveChanges(); // Save changes to the in-memory database
-        }
     }
 }

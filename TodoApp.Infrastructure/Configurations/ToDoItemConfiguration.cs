@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TodoApp.Domain.Entities;
-using TodoApp.Domain.Enums;
 
 namespace TodoApp.Infrastructure.Configurations
 {
@@ -9,15 +8,42 @@ namespace TodoApp.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<ToDoItem> builder)
         {
-            builder.HasData(
-                new ToDoItem { ToDoItemId = 1, ToDoListId = 1, Title = "Buy groceries", Description = "Buy milk, eggs, and bread", DueDate = DateTime.Now.AddDays(1), IsCompleted = false, Priority = PriorityLevel.Medium, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
-                new ToDoItem { ToDoItemId = 2, ToDoListId = 1, Title = "Schedule doctor appointment", Description = "Annual health checkup", DueDate = DateTime.Now.AddDays(3), IsCompleted = false, Priority = PriorityLevel.High, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
-                new ToDoItem { ToDoItemId = 3, ToDoListId = 2, Title = "Complete project report", Description = "Finish and submit the quarterly report", DueDate = DateTime.Now.AddDays(2), IsCompleted = false, Priority = PriorityLevel.High, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
-                new ToDoItem { ToDoItemId = 4, ToDoListId = 2, Title = "Team meeting", Description = "Discuss project progress with the team", DueDate = DateTime.Now.AddDays(1), IsCompleted = false, Priority = PriorityLevel.Low, CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now }
-            );
+         
+            builder.Property(i => i.ToDoListId)
+                .HasColumnName("ToDoListId");
+
+            builder.Property(i => i.Title)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("Title");
+
+            builder.Property(i => i.Description)
+                .HasMaxLength(500)
+                .HasColumnName("Description");
+
+            builder.Property(i => i.IsCompleted)
+                .HasColumnName("IsCompleted");
+
+            builder.Property(i => i.DueDate)
+                .IsRequired(false)
+                .HasColumnName("DueDate");
+
+            builder.Property(i => i.Priority)
+                .HasColumnName("Priority");
+
+            builder.Property(i => i.CreatedAt)
+                .IsRequired()
+                .HasColumnName("CreatedAt");
+
+            builder.Property(i => i.UpdatedAt)
+                .IsRequired()
+                .HasColumnName("UpdatedAt");
+
+            // Configure relationships
+            builder.HasOne(i => i.ToDoList)
+                .WithMany(t => t.Items)
+                .HasForeignKey(i => i.ToDoListId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
-
-
-
 }

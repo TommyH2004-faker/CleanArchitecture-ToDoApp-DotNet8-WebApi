@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using TodoApp.Application.Common;
 using TodoApp.Application.Interfaces;
 using TodoApp.Domain.Entities;
 
@@ -10,42 +6,92 @@ namespace TodoApp.Application.Services
 {
     public class ToDoListService : IToDoListService
     {
-        private readonly IToDoListRepository _toDoListRepository;
+        private readonly IToDoListRepository _repository;
 
-        public ToDoListService(IToDoListRepository toDoListRepository)
+        public ToDoListService(IToDoListRepository repository)
         {
-            _toDoListRepository = toDoListRepository;
+            _repository = repository;
         }
 
-        public async Task<IEnumerable<ToDoList>> GetAllListsAsync()
+        public async Task<Result<IEnumerable<ToDoList>>> GetAllListsAsync()
         {
-            return await _toDoListRepository.GetAllListsAsync();
+            try
+            {
+                var lists = await _repository.GetAllListsAsync();
+                return Result<IEnumerable<ToDoList>>.Success(lists);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<ToDoList>>.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task<IEnumerable<ToDoList>> GetListsByUserIdAsync(int userId)
+        public async Task<Result<IEnumerable<ToDoList>>> GetListsByUserIdAsync(int userId)
         {
-            return await _toDoListRepository.GetListsByUserIdAsync(userId);
+            try
+            {
+                var lists = await _repository.GetListsByUserIdAsync(userId);
+                return Result<IEnumerable<ToDoList>>.Success(lists);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<ToDoList>>.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task<ToDoList> GetListByIdAsync(int id)
+        public async Task<Result<ToDoList>> GetListByIdAsync(int id)
         {
-            return await _toDoListRepository.GetListByIdAsync(id);
+            try
+            {
+                var list = await _repository.GetListByIdAsync(id);
+                if (list == null)
+                    return Result<ToDoList>.Failure("List not found");
+                
+                return Result<ToDoList>.Success(list);
+            }
+            catch (Exception ex)
+            {
+                return Result<ToDoList>.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task AddListAsync(ToDoList list)
+        public async Task<Result> AddListAsync(ToDoList list)
         {
-            await _toDoListRepository.AddListAsync(list);
+            try
+            {
+                await _repository.AddListAsync(list);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task UpdateListAsync(ToDoList list)
+        public async Task<Result> UpdateListAsync(ToDoList list)
         {
-            await _toDoListRepository.UpdateListAsync(list);
+            try
+            {
+                await _repository.UpdateListAsync(list);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task DeleteListAsync(int id)
+        public async Task<Result> DeleteListAsync(int id)
         {
-            await _toDoListRepository.DeleteListAsync(id);
+            try
+            {
+                await _repository.DeleteListAsync(id);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error: {ex.Message}");
+            }
         }
     }
-
 }

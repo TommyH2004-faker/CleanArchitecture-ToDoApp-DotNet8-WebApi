@@ -1,0 +1,16 @@
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\bin\Debug\net8.0\TodoApp.Application.deps.json
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\bin\Debug\net8.0\TodoApp.Application.dll
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\bin\Debug\net8.0\TodoApp.Application.pdb
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\bin\Debug\net8.0\TodoApp.Domain.dll
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\bin\Debug\net8.0\TodoApp.Domain.pdb
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp.Application.csproj.AssemblyReference.cache
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp.Application.AssemblyInfoInputs.cache
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp.Application.AssemblyInfo.cs
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp.Application.csproj.CoreCompileInputs.cache
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp.Application.sourcelink.json
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp..05D78BBE.Up2Date
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp.Application.dll
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\refint\TodoApp.Application.dll
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\TodoApp.Application.pdb
+D:\PJ_Architecture\CleanArchitecture-ToDoApp-DotNet8-WebApi\TodoApp.Application\obj\Debug\net8.0\ref\TodoApp.Application.dll

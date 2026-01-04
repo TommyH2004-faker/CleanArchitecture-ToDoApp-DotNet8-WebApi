@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TodoApp.Domain.Entities;
+﻿using TodoApp.Application.Common;
+using TodoApp.Application.DTOs;
 
 namespace TodoApp.Application.Interfaces
 {
     public interface IUserService
     {
-        Task<IEnumerable<User>> GetAllUsersAsync();
-        Task<User> GetUserByIdAsync(int id);
-        Task AddUserAsync(User user);
-        Task UpdateUserAsync(User user);
-        Task DeleteUserAsync(int id);
+        Task<Result<List<UserDto>>> GetAllUsersAsync();
+        Task<Result<UserDto>> GetUserByIdAsync(int id);
+        Task<Result<UserDto>> CreateUserAsync(CreateUserDto dto);
+        Task<Result<UserDto>> UpdateUserAsync(int id, UpdateUserDto dto);
+        Task<Result> DeleteUserAsync(int id);
     }
-
 }

@@ -1,10 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TodoApp.Domain.Entities;
 
 namespace TodoApp.Infrastructure.Configurations
@@ -13,11 +8,38 @@ namespace TodoApp.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<ToDoList> builder)
         {
-            builder.HasData(
-                new ToDoList { ToDoListId = 1, UserId = 1, Title = "John's Personal Tasks", Description = "John's personal task list", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now },
-                new ToDoList { ToDoListId = 2, UserId = 2, Title = "Jane's Work Tasks", Description = "Jane's work-related tasks", CreatedAt = DateTime.Now, UpdatedAt = DateTime.Now }
-            );
+            builder.ToTable("ToDoLists");
+            builder.HasKey(t => t.ToDoListId);
+
+            builder.Property(t => t.ToDoListId)
+                .HasColumnName("ToDoListId")
+                .ValueGeneratedOnAdd();
+
+            builder.Property(t => t.UserId)
+                .HasColumnName("UserId");
+
+            builder.Property(t => t.Title)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("Title");
+
+            builder.Property(t => t.Description)
+                .HasMaxLength(500)
+                .HasColumnName("Description");
+
+            builder.Property(t => t.CreatedAt)
+                .IsRequired()
+                .HasColumnName("CreatedAt");
+
+            builder.Property(t => t.UpdatedAt)
+                .IsRequired()
+                .HasColumnName("UpdatedAt");
+
+            // Configure relationships
+            builder.HasMany(t => t.Items)
+                .WithOne(i => i.ToDoList)
+                .HasForeignKey(i => i.ToDoListId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
-
 }

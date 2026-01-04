@@ -1,50 +1,122 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using TodoApp.Application.Common;
+using TodoApp.Application.DTOs;
 using TodoApp.Application.Interfaces;
+using TodoApp.Application.Mappings;
 using TodoApp.Domain.Entities;
 
 namespace TodoApp.Application.Services
 {
-    /// <summary>
-    /// All the business logic should go via service hence we need to call repository from servcie and service
-    /// should be in Application layer.
-    /// </summary>
     public class ToDoItemService : IToDoItemService
     {
-        private readonly IToDoItemRepository _toDoItemRepository;
+        private readonly IToDoItemRepository _repository;
 
-        public ToDoItemService(IToDoItemRepository toDoItemRepository)
+        public ToDoItemService(IToDoItemRepository repository)
         {
-            _toDoItemRepository = toDoItemRepository;
+            _repository = repository;
         }
 
-        public async Task<IEnumerable<ToDoItem>> GetAllItemsAsync()
-         {
-            return await _toDoItemRepository.GetAllItemsAsync();
+        public async Task<Result<IEnumerable<ToDoItemDto>>> GetAllItemsAsync()
+        {
+            try
+            {
+                var items = await _repository.GetAllItemsAsync();
+                var dtos = items.Select(i => i.ToDto());
+                return Result<IEnumerable<ToDoItemDto>>.Success(dtos);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<ToDoItemDto>>.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task<ToDoItem> GetItemByIdAsync(int id)
+        public async Task<Result<ToDoItemDto>> GetItemByIdAsync(int id)
         {
-           return await _toDoItemRepository.GetItemByIdAsync(id); ;
+            try
+            {
+                if (id <= 0)
+                    return Result<ToDoItemDto>.Failure("Invalid ID");
+
+                var item = await _repository.GetItemByIdAsync(id);
+                
+                if (item == null)
+                    return Result<ToDoItemDto>.Failure("Item not found");
+
+                return Result<ToDoItemDto>.Success(item.ToDto());
+            }
+            catch (Exception ex)
+            {
+                return Result<ToDoItemDto>.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task AddItemAsync(ToDoItem item)
+        public async Task<Result> AddItemAsync(ToDoItemDto dto)
         {
-            await _toDoItemRepository.AddItemAsync(item);
+            try
+            {
+                // Validation
+                if (string.IsNullOrWhiteSpace(dto.Title))
+                    return Result.Failure("Title is required");
+
+                var item = ToDoItem.Create(
+                    dto.ToDoListId,
+                    dto.Title,
+                    dto.Description,
+                    dto.IsCompleted,
+                    dto.DueDate,
+                    dto.Priority
+                );
+
+                await _repository.AddItemAsync(item);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task UpdateItemAsync(ToDoItem item)
+        public async Task<Result> UpdateItemAsync(int id, ToDoItemDto dto)
         {
-            await _toDoItemRepository.UpdateItemAsync(item);
+            try
+            {
+                var item = await _repository.GetItemByIdAsync(id);
+                
+                if (item == null)
+                    return Result.Failure("Item not found");
+
+                item.Update(
+                    dto.Title,
+                    dto.Description,
+                    dto.IsCompleted,
+                    dto.DueDate,
+                    dto.Priority
+                );
+
+                await _repository.UpdateItemAsync(item);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error: {ex.Message}");
+            }
         }
 
-        public async Task DeleteItemAsync(int id)
+        public async Task<Result> DeleteItemAsync(int id)
         {
-            await _toDoItemRepository.DeleteItemAsync(id);
+            try
+            {
+                var item = await _repository.GetItemByIdAsync(id);
+                
+                if (item == null)
+                    return Result.Failure("Item not found");
+
+                await _repository.DeleteItemAsync(id);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure($"Error: {ex.Message}");
+            }
         }
     }
-
 }

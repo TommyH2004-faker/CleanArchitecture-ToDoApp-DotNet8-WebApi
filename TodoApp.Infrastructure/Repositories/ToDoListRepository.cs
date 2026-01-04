@@ -55,6 +55,11 @@ namespace TodoApp.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task<ToDoList?> GetByIdAsync(int id)
+        {
+            return await _context.ToDoLists.FindAsync(id);
+        }
+   
     }
 
 }
